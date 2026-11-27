@@ -252,24 +252,6 @@ function weaponComparison(list){
  return `<section class="weapon-comparison" aria-label="Weapon comparison"><div class="weapon-table-controls"><label>Tier <select id="weapon-tier" aria-label="Weapon comparison tier">${['I','II','III','IV'].map(t=>`<option${t===weaponTier?' selected':''}>${t}</option>`).join('')}</select></label><span>Fixed-tier weapons stay unchanged.</span></div><p class="weapon-data-note">Published stats: <a href="https://raider-tools.app/items/anvil/" target="_blank" rel="noopener">ARC Raider Tools ↗</a> · 5 Nov 2026 snapshot. Reload definitions and fire-rate stats differ across sources. Class and mod slots: wiki.</p><div class="weapon-table-scroll"><table class="weapon-table"><thead><tr>${weaponColumnOrder.map(c=>`<th scope="col" data-column="${esc(c)}" aria-sort="${weaponRowSort.column===c?(weaponRowSort.direction===1?'ascending':'descending'):'none'}">${c==='Source'?'Source':`<button type="button" data-weapon-sort="${esc(c)}" title="Sort rows by ${esc(c)}">${esc(c==='Rounds Per Second'?'RPS':c)} <span aria-hidden="true">${weaponRowSort.column===c?(weaponRowSort.direction===1?'↑':'↓'):'↕'}</span></button>`}</th>`).join('')}</tr></thead><tbody>${sortedWeapons(list).map(i=>`<tr data-weapon="${esc(i.name)}">${weaponColumnOrder.map(c=>{const value=weaponValue(i,c);return `<${c==='Weapon'?'th scope="row"':'td'} data-column="${esc(c)}"${c==='Damage Falloff'?' class="weapon-falloff"':''}>${c==='Weapon'?`<a class="material weapon-table-name" href="#item-${i.id}" style="color:${colors[i.rarity]||'#b3baaa'}">${itemPicture(i,'material-image')}${esc(i.name)}</a>`:c==='Source'?`<a href="${esc(i.weapon_table.source)}" target="_blank" rel="noopener" title="Published ${esc(i.name)} parameters">↗</a>`:esc(value??'—')}</${c==='Weapon'?'th':'td'}>`}).join('')}</tr>`).join('')}</tbody></table></div></section>`;
 }
 // Keep wheel navigation inside the comparison while the pointer is over it.
-document.addEventListener('wheel',e=>{
- if(e.ctrlKey)return;
- const panel=e.target.closest('#craft-flyout'),nav=e.target.closest('#categories,#page-outline');
- const scale=e.deltaMode===1?20:e.deltaMode===2?innerHeight:1,dx=e.deltaX*scale,dy=e.deltaY*scale;
- if(panel||nav){
-  const zone=panel||nav;e.preventDefault();
-  if(e.shiftKey)zone.scrollLeft+=dx||dy;else{zone.scrollTop+=dy;zone.scrollLeft+=dx}
-  return;
- }
- const table=e.target.closest('.weapon-table-scroll');
- if(table){
-  if(e.shiftKey||Math.abs(dx)>Math.abs(dy)){e.preventDefault();table.scrollLeft+=e.shiftKey?(dx||dy):dx;return}
-  // Full-height tables scroll with their containing document, never sideways on a vertical wheel.
-  if(table.scrollHeight>table.clientHeight+1){e.preventDefault();table.scrollTop+=dy}
-  return;
- }
- if(!e.target.closest('main,header'))e.preventDefault();
-},{passive:false});
 function refreshWeaponComparison(){
  const section=document.querySelector('.weapon-comparison'),scroll=section.querySelector('.weapon-table-scroll'),left=scroll.scrollLeft,top=scroll.scrollTop;
  const list=[...section.querySelectorAll('tbody .weapon-table-name')].map(a=>items.find(i=>'#item-'+i.id===a.getAttribute('href')));
@@ -545,4 +527,26 @@ async function refreshGuideOnline(button){
   document.open();document.write(html);document.close();
  }catch(error){button.disabled=false;button.textContent=label;alert('Could not load the latest online guide. Your current page is unchanged.\n'+error.message)}
 }
+</script><script id="guide-wheel-navigation">
+// Route wheel movement to the nearest scrollable content, including full-height tables.
+document.addEventListener('wheel',event=>{
+ if(event.ctrlKey||event.defaultPrevented||!(event.target instanceof Element)||event.target.closest('canvas'))return;
+ const navigation=event.target.closest('#categories,#page-outline');
+ if(navigation&&getComputedStyle(navigation).position==='fixed'){event.preventDefault();return}
+ const scale=event.deltaMode===1?20:event.deltaMode===2?innerHeight:1;
+ const horizontal=event.shiftKey||Math.abs(event.deltaX)>Math.abs(event.deltaY);
+ const delta=(horizontal?(event.deltaX||event.deltaY):event.deltaY)*scale;
+ if(!delta)return;
+ const dimension=horizontal?'scrollWidth':'scrollHeight',client=horizontal?'clientWidth':'clientHeight',offset=horizontal?'scrollLeft':'scrollTop';
+ let node=event.target;
+ while(node&&node!==document.body&&node!==document.documentElement){
+  const style=getComputedStyle(node),overflow=horizontal?style.overflowX:style.overflowY;
+  if(/auto|scroll|overlay/.test(overflow)&&node[dimension]>node[client]+1){event.preventDefault();node[offset]+=delta;return}
+  // A fixed side panel never passes its wheel movement into the page behind it.
+  if(node.id==='craft-flyout'&&style.position==='fixed'){event.preventDefault();return}
+  node=node.parentElement;
+ }
+ const root=document.scrollingElement;
+ if(root&&root[dimension]>root[client]+1){event.preventDefault();if(horizontal)window.scrollBy({left:delta,behavior:'instant'});else window.scrollBy({top:delta,behavior:'instant'})}
+},{passive:false});
 </script></body></html>

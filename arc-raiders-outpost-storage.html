@@ -52,4 +52,26 @@ async function refreshGuideOnline(button){
   document.open();document.write(html);document.close();
  }catch(error){button.disabled=false;button.textContent=label;alert('Could not load the latest online guide. Your current page is unchanged.\n'+error.message)}
 }
+</script><script id="guide-wheel-navigation">
+// Route wheel movement to the nearest scrollable content, including full-height tables.
+document.addEventListener('wheel',event=>{
+ if(event.ctrlKey||event.defaultPrevented||!(event.target instanceof Element)||event.target.closest('canvas'))return;
+ const navigation=event.target.closest('#categories,#page-outline');
+ if(navigation&&getComputedStyle(navigation).position==='fixed'){event.preventDefault();return}
+ const scale=event.deltaMode===1?20:event.deltaMode===2?innerHeight:1;
+ const horizontal=event.shiftKey||Math.abs(event.deltaX)>Math.abs(event.deltaY);
+ const delta=(horizontal?(event.deltaX||event.deltaY):event.deltaY)*scale;
+ if(!delta)return;
+ const dimension=horizontal?'scrollWidth':'scrollHeight',client=horizontal?'clientWidth':'clientHeight',offset=horizontal?'scrollLeft':'scrollTop';
+ let node=event.target;
+ while(node&&node!==document.body&&node!==document.documentElement){
+  const style=getComputedStyle(node),overflow=horizontal?style.overflowX:style.overflowY;
+  if(/auto|scroll|overlay/.test(overflow)&&node[dimension]>node[client]+1){event.preventDefault();node[offset]+=delta;return}
+  // A fixed side panel never passes its wheel movement into the page behind it.
+  if(node.id==='craft-flyout'&&style.position==='fixed'){event.preventDefault();return}
+  node=node.parentElement;
+ }
+ const root=document.scrollingElement;
+ if(root&&root[dimension]>root[client]+1){event.preventDefault();if(horizontal)window.scrollBy({left:delta,behavior:'instant'});else window.scrollBy({top:delta,behavior:'instant'})}
+},{passive:false});
 </script></body></html>
