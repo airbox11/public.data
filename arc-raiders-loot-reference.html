@@ -260,7 +260,7 @@ document.addEventListener('click',e=>{
  refreshWeaponComparison();document.querySelectorAll('[data-weapon-sort]').forEach(b=>{if(b.dataset.weaponSort===column)b.focus({preventScroll:true})});
 });
 document.addEventListener('change',e=>{if(e.target.id==='weapon-tier'){weaponTier=e.target.value;refreshWeaponComparison();document.getElementById('weapon-tier').focus({preventScroll:true})}});
-const augmentColumns=['Augment','Max Loadout Weight','Shield Compatibility','Loadout','Unique Feature','Durability','Source'];
+const augmentColumns=['Augment','Max Loadout Weight','Shield Compatibility','Total slots','Loadout','Unique Feature','Durability','Source'];
 const augmentSlotColumns=['Backpack','Quick Use','Grenades','Healing','Utility','Trinkets','Safe Pocket','Weapons','Shield','Melee'];
 let augmentSort={column:'Augment',direction:1};
 function augmentLoadout(i){
@@ -271,20 +271,20 @@ function augmentLoadout(i){
 function augmentValue(i,column){
  const d=i.augment_table||{};
  if(column==='Augment')return i.name;
- if(column==='Loadout')return Object.entries(d.slots||{}).filter(([key])=>!['Shield','Weapons','Melee'].includes(key)).reduce((sum,[key,n])=>sum+n,0);
+ if(column==='Loadout'||column==='Total slots')return Object.entries(d.slots||{}).filter(([key])=>!['Shield','Weapons','Melee'].includes(key)).reduce((sum,[key,n])=>sum+n,0);
  if(augmentSlotColumns.includes(column))return d.slots?.[column]??0;
  if(column==='Unique Feature')return (d.perks||[]).map(p=>p.name+': '+p.description).join(' ');
  return d.properties?.[column];
 }
 function augmentComparison(list){
- const {column,direction}=augmentSort,numeric=['Max Loadout Weight','Loadout',...augmentSlotColumns];
+ const {column,direction}=augmentSort,numeric=['Max Loadout Weight','Total slots','Loadout',...augmentSlotColumns];
  const sorted=[...list].sort((a,b)=>{const av=augmentValue(a,column),bv=augmentValue(b,column);if(av==null||av===''||bv==null||bv==='')return Number(av==null||av==='')-Number(bv==null||bv==='')||a.name.localeCompare(b.name);return direction*(numeric.includes(column)?parseFloat(av)-parseFloat(bv):String(av).localeCompare(String(bv),undefined,{numeric:true}))||a.name.localeCompare(b.name)});
  return `<section class="weapon-comparison augment-comparison" aria-label="Augment loadout comparison"><p class="weapon-data-note">Loadout counts, capacity and unique effects: <a href="https://raider-tools.app/items/" target="_blank" rel="noopener">ARC Raider Tools ↗</a> · 5 Nov 2026 snapshot.</p><div class="weapon-table-scroll"><table class="weapon-table augment-table"><thead><tr>${augmentColumns.map(c=>`<th scope="col" aria-sort="${column===c?(direction===1?'ascending':'descending'):'none'}">${c==='Source'?'Source':`<button type="button" data-augment-sort="${esc(c)}">${esc(c)} <span aria-hidden="true">${column===c?(direction===1?'↑':'↓'):'↕'}</span></button>`}</th>`).join('')}</tr></thead><tbody>${sorted.map(i=>`<tr data-augment="${esc(i.name)}">${augmentColumns.map(c=>`<${c==='Augment'?'th scope="row"':'td'} data-column="${esc(c)}"${['Unique Feature','Durability','Shield Compatibility'].includes(c)?' class="augment-description"':''}>${c==='Augment'?`<a class="material weapon-table-name" href="#item-${i.id}" style="color:${colors[i.rarity]||'#b3baaa'}">${itemPicture(i,'material-image')}${esc(i.name)}</a>`:c==='Source'?`<a href="${esc(i.augment_table.source)}" target="_blank" rel="noopener" title="${esc(i.name)} loadout source">↗</a>`:c==='Loadout'?augmentLoadout(i):esc(augmentValue(i,c)??'—')||'—'}</${c==='Augment'?'th':'td'}>`).join('')}</tr>`).join('')}</tbody></table></div></section>`;
 }
 document.addEventListener('click',e=>{
  const button=e.target.closest('[data-augment-sort]');if(!button)return;
  const column=button.dataset.augmentSort;
- augmentSort={column,direction:augmentSort.column===column?-augmentSort.direction:(['Max Loadout Weight','Loadout',...augmentSlotColumns].includes(column)?-1:1)};
+ augmentSort={column,direction:augmentSort.column===column?-augmentSort.direction:(['Max Loadout Weight','Total slots','Loadout',...augmentSlotColumns].includes(column)?-1:1)};
  const section=document.querySelector('.augment-comparison'),area=section.querySelector('.weapon-table-scroll'),left=area.scrollLeft,top=area.scrollTop;
  const list=[...section.querySelectorAll('.weapon-table-name')].map(a=>items.find(i=>'#item-'+i.id===a.getAttribute('href')));
  section.outerHTML=augmentComparison(list);const updated=document.querySelector('.augment-comparison');updated.querySelector('.weapon-table-scroll').scrollLeft=left;updated.querySelector('.weapon-table-scroll').scrollTop=top;
