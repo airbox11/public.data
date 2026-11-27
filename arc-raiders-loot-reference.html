@@ -265,7 +265,7 @@ document.addEventListener('click',e=>{
  refreshWeaponComparison();document.querySelectorAll('[data-weapon-sort]').forEach(b=>{if(b.dataset.weaponSort===column)b.focus({preventScroll:true})});
 });
 document.addEventListener('change',e=>{if(e.target.id==='weapon-tier'){weaponTier=e.target.value;refreshWeaponComparison();document.getElementById('weapon-tier').focus({preventScroll:true})}});
-const augmentColumns=['Augment','Max Loadout Weight','Shield Compatibility','Total slots','Loadout','Unique Feature','Source'];
+const augmentColumns=['Augment','Max Loadout Weight','Shield Compatibility','Total slots','Loadout','Source'];
 const augmentSlotColumns=['Backpack','Quick Use','Grenades','Healing','Utility','Trinkets','Safe Pocket','Weapons','Shield','Melee'];
 let augmentSort={column:'Augment',direction:1};
 function augmentLoadout(i){
@@ -308,7 +308,7 @@ function usesList(i){
  return `<details class="extra uses-section"><summary>Uses <span class="uses-count">${entries.length}</span></summary><ul class="uses-list">${entries.map(e=>`<li class="use-entry" data-kind="${esc(e.kind)}"><span class="use-icon use-${symbols[e.kind]}" title="${esc(e.kind)}" role="img" aria-label="${esc(e.kind)}">${icon(symbols[e.kind])}</span><a class="use-name" href="${esc(e.url)}" target="_blank" rel="noopener">${esc(e.name)}</a><strong class="use-quantity">${e.quantity}×</strong></li>`).join('')}</ul></details>`;
 }
 function augmentFeatures(i){const perks=i.augment_table?.perks||[];return perks.length?`<section class="augment-features" aria-label="Unique augment features">${perks.map(p=>`<div class="augment-feature"><strong>${esc(p.name)}</strong><p>${esc(p.description)}</p></div>`).join('')}</section>`:''}
-function card(i){return `<article class="card" data-item-category="${esc(i.category)}" id="item-${i.id}" tabindex="-1" data-id="${i.id}" style="--rarity:${colors[i.rarity]||'#b3baaa'}" aria-label="${esc(i.name)}">${corner(i)}<div class="item-head">${itemPicture(i,'item-image')}<div class="item-label"><h3 class="name"><a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.name)}</a></h3></div></div>${sourcePanel(i)}${i.crafted_item?`<p class="crafted-note">Unlocks <a href="${esc(i.crafted_item.url)}" target="_blank" rel="noopener">${esc(i.crafted_item.name)} ↗</a></p>`:''}${['Weapons','Augment'].includes(i.category)?'':parameterTable(i)}${materialGrid(i)}${materialSourcesButton(i)}${craftUseButtons(i)}${usesList(i)}</article>`}
+function card(i){return `<article class="card" data-item-category="${esc(i.category)}" id="item-${i.id}" tabindex="-1" data-id="${i.id}" style="--rarity:${colors[i.rarity]||'#b3baaa'}" aria-label="${esc(i.name)}">${corner(i)}<div class="item-head">${itemPicture(i,'item-image')}<div class="item-label"><h3 class="name"><a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.name)}</a></h3></div></div>${sourcePanel(i)}${i.crafted_item?`<p class="crafted-note">Unlocks <a href="${esc(i.crafted_item.url)}" target="_blank" rel="noopener">${esc(i.crafted_item.name)} ↗</a></p>`:''}${i.category==='Augment'?augmentFeatures(i):i.category==='Weapons'?'':parameterTable(i)}${materialGrid(i)}${materialSourcesButton(i)}${craftUseButtons(i)}${usesList(i)}</article>`}
 function sellPrice(i){const n=Number(String(i.price).replaceAll(',',''));return Number.isFinite(n)&&i.price.trim()!==''?n:-1}
 function isRewardedBlueprint(i){return i.category==='Blueprint'&&((i.quest_rewards||[]).length||(i.acquisition_sources||[]).includes('Project rewards'))}
 function blueprintRewards(group,showTitle=true){
