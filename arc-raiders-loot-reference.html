@@ -519,10 +519,10 @@ async function refreshGuideOnline(button){
  try{
   const url=new URL(location.protocol==='file:'?'https://airbox11.github.io/public.data/'+location.pathname.split('/').pop():location.href);
   url.hash='';url.searchParams.set('_refresh',Date.now().toString());
+  if(location.protocol==='file:'){location.assign(url.href);return}
   const response=await fetch(url.href,{cache:'no-store'});if(!response.ok)throw new Error('HTTP '+response.status);
   const html=await response.text();if(!/<!doctype html/i.test(html))throw new Error('Invalid guide response');
   // Restore the canonical address so relative links and the guide history keep working.
-  if(location.protocol==='file:'){location.assign(url.href);return}
   url.searchParams.delete('_refresh');history.replaceState(null,'',url.pathname+url.search);
   document.open();document.write(html);document.close();
  }catch(error){button.disabled=false;button.textContent=label;alert('Could not load the latest online guide. Your current page is unchanged.\n'+error.message)}
