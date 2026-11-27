@@ -107,6 +107,7 @@
 .craft-uses-panel li.craft-recipe-pair{grid-template-columns:85px minmax(0,1fr);gap:5px 8px}.craft-recipe-pair>.craft-result-side{grid-column:1;grid-row:1;padding:2px 0}.craft-recipe-pair>.craft-input-grid{grid-column:2;grid-row:1;display:flex;flex-direction:row;flex-wrap:wrap;align-content:flex-start;gap:3px;margin:0}.craft-result-side:before{display:none;content:none}.craft-recipe-pair .craft-output{display:flex;flex-direction:column;align-items:flex-start;gap:3px;font-size:10px}.craft-recipe-pair .craft-output .material-name{flex-basis:auto}.craft-recipe-pair .craft-output .material-image{width:28px;height:28px}.craft-recipe-pair .craft-input{display:flex;flex-wrap:nowrap;align-items:center;gap:3px;flex:0 1 auto;max-width:100%;padding:2px 3px}.craft-recipe-pair .craft-input .material{display:flex;flex-wrap:nowrap;align-items:center;gap:3px;font-size:9px}.craft-recipe-pair .craft-input .material span{max-width:92px;line-height:1.1}.craft-recipe-pair .craft-input .material-image{width:18px!important;height:18px!important}.craft-recipe-pair .craft-input>strong{font-size:9px;margin-left:2px}.craft-recipe-pair>.recipe-requirements{font-size:9px;line-height:1.2;margin:1px 0 0}
 .augment-features{margin:8px 0 12px;padding:9px 10px;border:1px solid #4b6141;border-radius:5px;background:#22301f}.augment-feature strong{font-size:11px;color:#c7dfa7}.augment-feature p{font-size:11px;line-height:1.45;color:#c0cbb7;margin:4px 0 0}.augment-feature+.augment-feature{margin-top:9px}
 .loot-equipment-group{border-top:1px solid #42543b;margin-top:7px;padding-top:7px}.loot-equipment-group>summary{cursor:pointer;color:#b9cda7;font-size:11px;list-style-position:inside}.loot-equipment-group>summary>span{float:right;color:#8fa080;font-size:10px}.loot-equipment-group .loot-provider{margin-top:5px}
+#craft-flyout,#categories,#page-outline,.weapon-table-scroll{overscroll-behavior:contain}
 </style></head><body>
 <header><a class="guide-home" href="index.html" aria-label="Home — all guides">⌂ Home</a><h1 id="page-title">All Items</h1></header>
 <div class="app"><aside aria-label="Loot categories" id="categories"><h2>CATEGORIES</h2></aside><main><nav id="page-outline" aria-label="Jump to a group on this page"><div class="page-outline-label">ON THIS PAGE</div><div id="page-outline-links"></div></nav><div class="toolbar"><input id="search" type="search" aria-label="Search items, loot zones, sources and material outputs" placeholder="Search items, loot zones, sources or materials…"><select id="rarity" aria-label="Filter by rarity"><option value="">All rarities</option></select><select id="sort" aria-label="Sort items"><option value="rarity">Rarity → price ↓</option><option value="name">Name A–Z</option><option value="price">Sell price ↓</option><option value="stack">Stack size ↓</option></select></div><div id="rarity-legend" aria-label="Rarity colors" style="display:flex;gap:15px;flex-wrap:wrap;font:11px monospace;margin:0 0 16px"></div><div class="status" id="status" aria-live="polite"></div><div id="groups"></div><footer><a href="https://arcraiders.wiki/wiki/Loot" target="_blank" rel="noopener">ARC Raiders Wiki</a> · <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a></footer></main></div>
@@ -239,15 +240,22 @@ function weaponComparison(list){
 }
 // Keep wheel navigation inside the comparison while the pointer is over it.
 document.addEventListener('wheel',e=>{
- const area=e.target.closest('.weapon-table-scroll');if(!area||e.ctrlKey)return;
- const scale=e.deltaMode===1?20:e.deltaMode===2?area.clientHeight:1;
- const dx=e.deltaX*scale,dy=e.deltaY*scale;
- e.preventDefault();
- if(e.shiftKey){area.scrollLeft+=dx||dy;return}
- area.scrollLeft+=dx;
- if(area.closest('.weapon-comparison')){window.scrollBy({top:dy,behavior:'instant'})}
- else if(area.scrollHeight>area.clientHeight+1)area.scrollTop+=dy;
- else area.scrollLeft+=dy;
+ if(e.ctrlKey)return;
+ const panel=e.target.closest('#craft-flyout'),nav=e.target.closest('#categories,#page-outline');
+ const scale=e.deltaMode===1?20:e.deltaMode===2?innerHeight:1,dx=e.deltaX*scale,dy=e.deltaY*scale;
+ if(panel||nav){
+  const zone=panel||nav;e.preventDefault();
+  if(e.shiftKey)zone.scrollLeft+=dx||dy;else{zone.scrollTop+=dy;zone.scrollLeft+=dx}
+  return;
+ }
+ const table=e.target.closest('.weapon-table-scroll');
+ if(table){
+  if(e.shiftKey||Math.abs(dx)>Math.abs(dy)){e.preventDefault();table.scrollLeft+=e.shiftKey?(dx||dy):dx;return}
+  // Full-height tables scroll with their containing document, never sideways on a vertical wheel.
+  if(table.scrollHeight>table.clientHeight+1){e.preventDefault();table.scrollTop+=dy}
+  return;
+ }
+ if(!e.target.closest('main,header'))e.preventDefault();
 },{passive:false});
 function refreshWeaponComparison(){
  const section=document.querySelector('.weapon-comparison'),scroll=section.querySelector('.weapon-table-scroll'),left=scroll.scrollLeft,top=scroll.scrollTop;
